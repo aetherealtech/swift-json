@@ -4,10 +4,10 @@ import Foundation
 import JSON
 import NumericExtensions
 
-public typealias JSONArrayMatcher = [JSONValueMatcher]
-public typealias JSONObjectMatcher = [String: JSONValueMatcher]
+public typealias JSONArrayPredicate = [JSONPredicate]
+public typealias JSONObjectPredicate = [String: JSONPredicate]
 
-public struct JSONValueMatcher: CustomDebugStringConvertible {
+public struct JSONPredicate: CustomDebugStringConvertible {
     struct Mismatch {
         let path: [String]
         let description: String
@@ -32,7 +32,7 @@ public struct JSONValueMatcher: CustomDebugStringConvertible {
         }
     }
 
-    public static func exactly(_ expectedElement: (any JSONValue)?) -> JSONValueMatcher {
+    public static func exactly(_ expectedElement: (any JSONValue)?) -> JSONPredicate {
         .init(description: "\(expectedElement.debugDescription)") { actualElement in
             guard actualElement.jsonErased == (expectedElement?.jsonErased ?? .null) else {
                 return "\(expectedElement.debugDescription) != '\(actualElement.debugDescription)'"
@@ -42,7 +42,7 @@ public struct JSONValueMatcher: CustomDebugStringConvertible {
         }
     }
 
-    public static func null() -> JSONValueMatcher {
+    public static func null() -> JSONPredicate {
         .init(description: "is null") { actualElement in
             guard actualElement is Null else {
                 return "Expected null, got '\(actualElement.debugDescription)'"
@@ -54,15 +54,15 @@ public struct JSONValueMatcher: CustomDebugStringConvertible {
 
     public static func number(
         description: String,
-        _ numberMatcher: @escaping (Double) -> Bool,
+        _ numberPredicate: @escaping (Double) -> Bool,
         mismatchMessage: @escaping (Double) -> String
-    ) -> JSONValueMatcher {
+    ) -> JSONPredicate {
         .init(description: description) { actualElement in
             guard let actualNumber = actualElement as? Double else {
                 return "Expected a number, got a \(Swift.type(of: actualElement))"
             }
 
-            guard numberMatcher(actualNumber) else {
+            guard numberPredicate(actualNumber) else {
                 return mismatchMessage(actualNumber)
             }
             
@@ -72,39 +72,39 @@ public struct JSONValueMatcher: CustomDebugStringConvertible {
     
     static func number<Integer: BinaryInteger>(
         description: String,
-        _ numberMatcher: @escaping (Integer) -> Bool,
+        _ numberPredicate: @escaping (Integer) -> Bool,
         mismatchMessage: @escaping (Double) -> String
-    ) -> JSONValueMatcher {
+    ) -> JSONPredicate {
         number(
             description: description,
-            { (actualNumber: Double) in numberMatcher(.init(actualNumber)) },
+            { (actualNumber: Double) in numberPredicate(.init(actualNumber)) },
             mismatchMessage: mismatchMessage
         )
     }
     
     static func number<FloatingPoint: BinaryFloatingPoint>(
         description: String,
-        _ numberMatcher: @escaping (FloatingPoint) -> Bool,
+        _ numberPredicate: @escaping (FloatingPoint) -> Bool,
         mismatchMessage: @escaping (Double) -> String
-    ) -> JSONValueMatcher {
+    ) -> JSONPredicate {
         number(
             description: description,
-            { (actualNumber: Double) in numberMatcher(.init(actualNumber)) },
+            { (actualNumber: Double) in numberPredicate(.init(actualNumber)) },
             mismatchMessage: mismatchMessage
         )
     }
 
     public static func string(
         description: String,
-        _ stringMatcher: @escaping (String) -> Bool,
+        _ stringPredicate: @escaping (String) -> Bool,
         mismatchMessage: @escaping (String) -> String
-    ) -> JSONValueMatcher {
-        JSONValueMatcher(description: description) { actualElement in
+    ) -> JSONPredicate {
+        JSONPredicate(description: description) { actualElement in
             guard let actualString = actualElement as? String else {
                 return "Expected a string, got a \(Swift.type(of: actualElement))"
             }
             
-            guard stringMatcher(actualString) else {
+            guard stringPredicate(actualString) else {
                 return mismatchMessage(actualString)
             }
             
@@ -113,9 +113,9 @@ public struct JSONValueMatcher: CustomDebugStringConvertible {
     }
 
     public static func array(
-        _ expectedArray: JSONArrayMatcher
-    ) -> JSONValueMatcher {
-        JSONValueMatcher(description: "\(expectedArray)") { path, actualElement in
+        _ expectedArray: JSONArrayPredicate
+    ) -> JSONPredicate {
+        JSONPredicate(description: "\(expectedArray)") { path, actualElement in
             guard let actualArray = actualElement as? JSONArray else {
                 return [.init(path: path, description: "Expected an array, got a \(Swift.type(of: actualElement))")]
             }
@@ -144,9 +144,9 @@ public struct JSONValueMatcher: CustomDebugStringConvertible {
     }
     
     public static func object(
-        _ expectedObject: JSONObjectMatcher
-    ) -> JSONValueMatcher {
-        JSONValueMatcher(description: "\(expectedObject)") { path, actualElement in
+        _ expectedObject: JSONObjectPredicate
+    ) -> JSONPredicate {
+        JSONPredicate(description: "\(expectedObject)") { path, actualElement in
             guard let actualObject = actualElement as? JSONObject else {
                 return [.init(path: path, description: "Expected an object, got a \(Swift.type(of: actualElement))")]
             }
@@ -205,7 +205,7 @@ public struct JSONValueMatcher: CustomDebugStringConvertible {
 
 public func assertMatches(
     _ value: any JSONValue,
-    _ matcher: JSONValueMatcher,
+    _ matcher: JSONPredicate,
     message: @autoclosure () -> String? = nil
 ) throws {
     if let mismatches = matcher.mismatches(with: value) {
@@ -213,8 +213,8 @@ public func assertMatches(
     }
 }
 
-public extension JSONValueMatcher {
-    static func greaterThan(_ expectedNumber: Double) -> JSONValueMatcher {
+public extension JSONPredicate {
+    static func greaterThan(_ expectedNumber: Double) -> JSONPredicate {
         number(
             description: "> \(expectedNumber)",
             { actualNumber in actualNumber > expectedNumber },
@@ -222,7 +222,7 @@ public extension JSONValueMatcher {
         )
     }
     
-    static func lessThan(_ expectedNumber: Double) -> JSONValueMatcher {
+    static func lessThan(_ expectedNumber: Double) -> JSONPredicate {
         number(
             description: "< \(expectedNumber)",
             { actualNumber in actualNumber < expectedNumber },
@@ -230,7 +230,7 @@ public extension JSONValueMatcher {
         )
     }
     
-    static func approximately(_ expectedNumber: Double, tolerance: Double) -> JSONValueMatcher {
+    static func approximately(_ expectedNumber: Double, tolerance: Double) -> JSONPredicate {
         number(
             description: "\(expectedNumber) +/- \(tolerance)",
             { actualNumber in actualNumber.isApproximately(expectedNumber, tolerance: tolerance) },
@@ -238,7 +238,7 @@ public extension JSONValueMatcher {
         )
     }
 
-    static func approximately(_ expectedValue: Double?, tolerance: Double) -> JSONValueMatcher {
+    static func approximately(_ expectedValue: Double?, tolerance: Double) -> JSONPredicate {
         if let expectedValue {
             approximately(expectedValue, tolerance: tolerance)
         } else {
@@ -247,8 +247,8 @@ public extension JSONValueMatcher {
     }
 }
 
-public extension JSONValueMatcher {
-    static func stringContaining(_ expectedValue: String) -> JSONValueMatcher {
+public extension JSONPredicate {
+    static func stringContaining(_ expectedValue: String) -> JSONPredicate {
         string(
             description: "contains \(expectedValue)",
             { actualValue in actualValue.contains(expectedValue) },
@@ -257,19 +257,19 @@ public extension JSONValueMatcher {
     }
 }
 
-public extension JSONValueMatcher {
+public extension JSONPredicate {
     static func date(
         description: String,
         formatter: DateFormatter,
-        _ stringMatcher: @escaping (Date) -> Bool,
+        _ stringPredicate: @escaping (Date) -> Bool,
         mismatchMessage: @escaping (Date) -> String
-    ) -> JSONValueMatcher {
-        JSONValueMatcher(description: description) { actualElement in
+    ) -> JSONPredicate {
+        JSONPredicate(description: description) { actualElement in
             guard let actualString = actualElement as? String, let actualDate = formatter.date(from: actualString) else {
                 return "Expected a string, got a \(Swift.type(of: actualElement))"
             }
             
-            guard !stringMatcher(actualDate) else {
+            guard !stringPredicate(actualDate) else {
                 return mismatchMessage(actualDate)
             }
             
@@ -277,7 +277,7 @@ public extension JSONValueMatcher {
         }
     }
     
-    static func dateInRange(_ range: Range<Date>, formatter: DateFormatter) -> JSONValueMatcher {
+    static func dateInRange(_ range: Range<Date>, formatter: DateFormatter) -> JSONPredicate {
         date(
             description: "\(range)",
             formatter: formatter,

@@ -2,7 +2,7 @@ import Assertions
 import JSON
 import XCTest
 
-@testable import JSONMatching
+@testable import JSONPredicate
 
 struct TestStruct: Hashable, Codable {
     struct InnerStruct: Hashable, Codable {
@@ -27,7 +27,7 @@ final class JSONTests: XCTestCase {
                 true,
                 5,
                 false,
-                Null(),
+                null,
                 "eww"
             ],
             "object": [
@@ -36,7 +36,7 @@ final class JSONTests: XCTestCase {
             ]
         ]
         
-        let jsonMatcher: JSONValueMatcher = .object([
+        let jsonPredicate: JSONPredicate = .object([
             "bool": .exactly(false),
             "number": .greaterThan(3),
             "string": .stringContaining("de"),
@@ -53,6 +53,6 @@ final class JSONTests: XCTestCase {
             ])
         ])
         
-        try assertMatches(json, jsonMatcher)
+        try assertMatches(json, jsonPredicate)
     }
 }

@@ -12,8 +12,8 @@ let package = Package(
             targets: ["JSON"]
         ),
         .library(
-            name: "JSONMatching",
-            targets: ["JSONMatching"]
+            name: "JSONPredicate",
+            targets: ["JSONPredicate"]
         ),
     ],
     dependencies: [
@@ -28,7 +28,7 @@ let package = Package(
             ]
         ),
         .target(
-            name: "JSONMatching",
+            name: "JSONPredicate",
             dependencies: [
                 "JSON",
                 .product(name: "Assertions", package: "swift-assertions"),
@@ -44,9 +44,9 @@ let package = Package(
             ]
         ),
         .testTarget(
-            name: "JSONMatchingTests",
+            name: "JSONPredicateTests",
             dependencies: [
-                "JSONMatching",
+                "JSONPredicate",
                 .product(name: "Assertions", package: "swift-assertions"),
             ]
         ),
