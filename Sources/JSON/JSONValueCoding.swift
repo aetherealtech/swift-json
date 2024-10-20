@@ -86,7 +86,7 @@ public struct JSONValueEncoder: TopLevelEncoder {
         
         var codingPath: [any CodingKey]
         
-        mutating func encodeNil() { result = Null() }
+        mutating func encodeNil() { result = null }
         
         mutating func encode(_ value: Bool) { result = value }
         
@@ -143,7 +143,7 @@ public struct JSONValueEncoder: TopLevelEncoder {
         
         var count: Int { result.count }
         
-        mutating func encodeNil() { result.append(Null()) }
+        mutating func encodeNil() { result.append(null) }
         
         mutating func encode(_ value: Bool) { result.append(value) }
         
@@ -195,7 +195,7 @@ public struct JSONValueEncoder: TopLevelEncoder {
         }
         
         mutating func superEncoder() -> any Swift.Encoder {
-            result.append(Null())
+            result.append(null)
             let index = result.indices.last!
             
             return Encoder(
@@ -229,7 +229,7 @@ public struct JSONValueEncoder: TopLevelEncoder {
         
         var codingPath: [any CodingKey]
         
-        mutating func encodeNil(forKey key: Key) { result[key.stringValue] = Null() }
+        mutating func encodeNil(forKey key: Key) { result[key.stringValue] = null }
         
         mutating func encode(_ value: Bool, forKey key: Key) { result[key.stringValue] = value }
         
@@ -287,7 +287,7 @@ public struct JSONValueEncoder: TopLevelEncoder {
         }
         
         private mutating func superEncoder(forSomeKey key: some CodingKey) -> any Swift.Encoder {
-            result[key.stringValue] = Null()
+            result[key.stringValue] = null
             
             return Encoder(
                 result: .init(
