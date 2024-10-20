@@ -1,23 +1,54 @@
-// swift-tools-version: 5.10
+// swift-tools-version: 6.0
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
 
 let package = Package(
     name: "JSON",
+    platforms: [.macOS(.v10_15)],
     products: [
-        // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
             name: "JSON",
-            targets: ["JSON"]),
+            targets: ["JSON"]
+        ),
+        .library(
+            name: "JSONMatching",
+            targets: ["JSONMatching"]
+        ),
+    ],
+    dependencies: [
+        .package(url: "https://github.com/aetherealtech/swift-assertions", from: .init(0, 1, 0)),
+        .package(url: "https://github.com/aetherealtech/swift-core-extensions", from: .init(0, 1, 0)),
     ],
     targets: [
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "JSON"),
+            name: "JSON",
+            dependencies: [
+                .product(name: "CollectionExtensions", package: "swift-core-extensions"),
+            ]
+        ),
+        .target(
+            name: "JSONMatching",
+            dependencies: [
+                "JSON",
+                .product(name: "Assertions", package: "swift-assertions"),
+                .product(name: "CollectionExtensions", package: "swift-core-extensions"),
+                .product(name: "NumericExtensions", package: "swift-core-extensions"),
+            ]
+        ),
         .testTarget(
             name: "JSONTests",
-            dependencies: ["JSON"]),
+            dependencies: [
+                "JSON",
+                .product(name: "Assertions", package: "swift-assertions"),
+            ]
+        ),
+        .testTarget(
+            name: "JSONMatchingTests",
+            dependencies: [
+                "JSONMatching",
+                .product(name: "Assertions", package: "swift-assertions"),
+            ]
+        ),
     ]
 )
